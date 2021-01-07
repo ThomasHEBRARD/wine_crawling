@@ -1,7 +1,7 @@
 from itemadapter import ItemAdapter
 import psycopg2
 
-class IdealWinePipeline:
+class WinePipeline:
     def open_spider(self, spider):
         hostname = "localhost"
         username = "postgres"

@@ -1,6 +1,6 @@
 import scrapy
 import re
-from wine_crawling.items import IdealWineItem
+from wine_crawling.items import WineItem
 
 class IdealWineSpider(scrapy.Spider):
     name = "ideal_wine"
@@ -18,7 +18,7 @@ class IdealWineSpider(scrapy.Spider):
         # "AUTOTHROTTLE_START_DELAY": "3",
         # "AUTOTHROTTLE_MAX_DELAY": "3",
         # "AUTOTHROTTLE_TARGET_CONCURRENCY": "1.0",
-        "ITEM_PIPELINES": {"wine_crawling.pipelines.IdealWinePipeline": 300,}
+        "ITEM_PIPELINES": {"wine_crawling.pipelines.WinePipeline": 300,}
     }
 
     BASE_HEADER = {
@@ -50,9 +50,6 @@ class IdealWineSpider(scrapy.Spider):
             
 
     def parse(self, response):
-        print('ok')
-        page = response.url.split("/")[-2]
-        filename = "quotes-%s.html" % page
         next_page = response.xpath(
             '//ol[@class="pagingV2"]/li[11]/a/@href'
         ).extract_first()
@@ -78,7 +75,7 @@ class IdealWineSpider(scrapy.Spider):
             )
 
     def build_item(self, response):
-        item = IdealWineItem()
+        item = WineItem()
         item["name"] = response.xpath(
             "//div[@class='description-1']//h1/text()"
         ).extract_first()

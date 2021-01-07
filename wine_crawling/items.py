@@ -1,6 +1,6 @@
 import scrapy
 
-class IdealWineItem(scrapy.Item):
+class WineItem(scrapy.Item):
     name = scrapy.Field(allow_null=True)
     color = scrapy.Field(allow_null=True)
     appellation = scrapy.Field(allow_null=True)
