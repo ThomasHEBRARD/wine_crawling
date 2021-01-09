@@ -84,6 +84,9 @@ class IdealWineSpider(scrapy.Spider):
             "//section[@id='descriptif']//article[@class='prez-3']/ul/li"
         )
         item["url"] = response.url
+        item["website"] = "idealwine"
+        quantity = 1
+
         for j in info:
             text = j.xpath("./strong/text()").extract_first()
             if "Pays / Region" in text:
@@ -92,22 +95,50 @@ class IdealWineSpider(scrapy.Spider):
                 item["color"] = j.xpath("./text()").extract_first()
             if "Appellation" in text:
                 item["appellation"] = j.xpath("./text()").extract_first()
+            if "Apogée" in text:
+                item["apogee"] = j.xpath("./text()").extract_first()
             if "Propriétaire" in text:
                 item["domaine"] = j.xpath("./text()").extract_first()
             if "Millesime" in text:
                 item["millesime"] = j.xpath("./text()").extract_first()
             if "Classement" in text:
                 item["classement"] = j.xpath("./text()").extract_first()
+            if "Viticulture" in text:
+                item["viticulture"] = j.xpath("./text()").extract_first().replace(u'\xa0', '')
+            if "Pourcentage" in text:
+                item["degre_alcool"] = j.xpath("./text()").extract_first().split(" %")[0]
+            if "Producteur" in text:
+                item["producteur"] = j.xpath("./text()").extract_first()
+
             if "Encepagement" in text:
                 list_cepage = []
                 if j.xpath(".//a").extract() is not None:
-                    for k in j.xpath(".//a"):
-                        list_cepage.append(k.xpath("./text()").extract_first())
-                    item["cepage"] = '/'.join(list_cepage) if '/'.join(list_cepage) != None else ''
+                    if "%" in j.xpath(".//strong/following-sibling::text()").get():
+                        brut_percentages = j.xpath(".//strong/following-sibling::text()")
+                        percentages = [brut_percentages[i].get() for i in range(len(brut_percentages))]
+                        clean_percentages = []
+                        for percentage in percentages:
+                            if "%" in percentage:
+                                p = re.search(r", (.*)%", percentage)
+                                if p == None:
+                                    p = re.search(r",(.*)%", percentage)
+                                    if p == None:
+                                        p = re.search(r" (.*)%", percentage)
+                            clean_percentages.append(p.group(1).split("%")[0])
+
+                        for per, cepage in enumerate(j.xpath(".//a")):
+                            list_cepage.append(f"{clean_percentages[per]}_" + cepage.xpath("./text()").extract_first())
+                    else:
+                        for k in j.xpath(".//a"):
+                            list_cepage.append(k.xpath("./text()").extract_first())
+                    item["cepage"] = '/'.join(list_cepage)
                 else:
-                    item["cepage"] = ''
-        item["price"] = response.xpath(
-            "//span[@id='input_prix']/text()"
-        ).extract_first()
+                    item["cepage"] = j.xpath("./text()").extract_first().split(",")
+            
+            # if "Quantité" in text:
+            #     quantity_text = j.xpath("./text()").extract_first()
+            #     quantity = int(quantity_text.split('B')[0])
+            # if price := response.xpath("//span[@id='input_prix']/text()").extract_first() != None:
+            #     item["price"] = int(price)/quantity
         # print(item.__dict__)
         yield item

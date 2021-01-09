@@ -17,34 +17,26 @@ class WinePipeline:
 
     def process_item(self, item, spider):
         try:
-            query = f""" CREATE TABLE IF NOT EXISTS public.bottles
-                    (
-                        name VARCHAR(200),
-                        color VARCHAR(200),
-                        appellation VARCHAR(200),
-                        domaine VARCHAR(200),
-                        producteur VARCHAR(200),
-                        cepage VARCHAR(200),
-                        millesime VARCHAR(200),
-                        classement VARCHAR(200),
-                        pays VARCHAR(200),
-                        price VARCHAR(200),
-                        url VARCHAR(200)
-                    );
-                    """
-            self.cursor.execute(query)
+            creation_query = item.get_table_creation_query()
+            self.cursor.execute(creation_query)
             self.connection.commit()
-            self.cursor.execute(
-                """
+
+            values_format = tuple([str(it).replace("'", " ") for it in item.values()])
+
+            query = (
+               """
                 INSERT INTO 
-                public.bottles({})
+                {}({})
                 VALUES{}
                 """.format(
+                    item.get_table_name(),
                     ','.join(item.keys()),
                     tuple([str(it).replace("'", " ") for it in item.values()])
-                    )
+                )
             )
+            self.cursor.execute(query)
             self.connection.commit()
+            print(item["name"])
         except (Exception, psycopg2.DatabaseError) as error:
             print("Error: %s" % error)
             self.connection.rollback()
