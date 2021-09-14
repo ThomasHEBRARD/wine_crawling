@@ -3,7 +3,7 @@ import re
 from wine_crawling.items import WineItem
 
 class VinsEtonnantsSpider(scrapy.Spider):
-    name = "vins-etonnants"
+    name = "vins_etonnants"
     domain_name = "https://www.vins-etonnants.com"
 
     start_urls = [
