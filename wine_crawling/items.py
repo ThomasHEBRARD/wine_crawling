@@ -5,6 +5,7 @@ class WineItem(scrapy.Item):
     pays = scrapy.Field(allow_null=True)
     domaine = scrapy.Field(allow_null=True)
     producteur = scrapy.Field(allow_null=True)
+    terroir = scrapy.Field(allow_null=True)
     appellation = scrapy.Field(allow_null=True)
     millesime = scrapy.Field(allow_null=True)
 

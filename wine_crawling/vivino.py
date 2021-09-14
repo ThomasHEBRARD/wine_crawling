@@ -20,7 +20,7 @@ data = {
 already_treated_wine = []
 
 for i in range(200):
-    print(i, len(data["wine_name"]))
+    print(i, len(data["wine_name"]), 'coucou')
     url = "https://www.vivino.com/api/explore/explore?min_rating=0.1&page={}".format(i)
     r = requests.get(
         url=url,
