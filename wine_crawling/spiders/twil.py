@@ -3,7 +3,7 @@ import re
 from wine_crawling.items import WineItem
 
 
-class IdealWineSpider(scrapy.Spider):
+class TwilSpider(scrapy.Spider):
     name = "twil"
     domain_name = "https://www.twil.fr"
 
@@ -15,12 +15,12 @@ class IdealWineSpider(scrapy.Spider):
 
     BASE_HEADER = {
         "Cache-Control": "max-age=0",
-        "origin": "https://www.idealwine.com",
+        "origin": "https://www.twil.fr",
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36",
         "Sec-Fetch-User": "?1",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
         "Sec-Fetch-Site": "none",
-        "Referer": "https://www.idealwine.com/fr/acheter-du-vin/vins-en-vente.jsp",
+        "Referer": "https://www.twil.fr/france.html?limit=36&p=1",
         "Sec-Fetch-Mode": "navigate",
         "Accept-Encoding": "gzip, deflate, br",
         "Accept-Language": "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7",
@@ -77,5 +77,5 @@ class IdealWineSpider(scrapy.Spider):
         item["degree_alcool"] = response.xpath("//div[@class='alcool col-xs-12 col-sm-4']/p/text()").extract()[1].strip()
 
         item["url"] = response.url
-        
+
         yield item
