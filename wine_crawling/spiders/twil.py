@@ -1,16 +1,21 @@
 import scrapy
 import re
 from wine_crawling.items import WineItem
+from scrapy.spidermiddlewares.httperror import HttpError
+from twisted.internet.error import DNSLookupError, TCPTimedOutError
 
 
 class TwilSpider(scrapy.Spider):
     name = "twil"
     domain_name = "https://www.twil.fr"
 
+    start_urls = ["https://www.twil.fr/france.html"]
+
     custom_settings = {
+        "DOWNLOAD_DELAY": "1",
         "ITEM_PIPELINES": {
             "wine_crawling.pipelines.WinePipeline": 300,
-        }
+        },
     }
 
     BASE_HEADER = {
@@ -20,7 +25,7 @@ class TwilSpider(scrapy.Spider):
         "Sec-Fetch-User": "?1",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
         "Sec-Fetch-Site": "none",
-        "Referer": "https://www.twil.fr/france.html?limit=36&p=1",
+        "Referer": "https://www.twil.fr/france.html",
         "Sec-Fetch-Mode": "navigate",
         "Accept-Encoding": "gzip, deflate, br",
         "Accept-Language": "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7",
@@ -45,17 +50,16 @@ class TwilSpider(scrapy.Spider):
             '//a[@class=" border-nav next_page_link next i-next"]/@href'
         ).extract_first()
 
-        print(next_page)
         next_page = re.search(r"p=(.*)", next_page).group(1)
 
-        next_page_url = "https://www.twil.fr/france.html?limit=36&p=%s" % next_page
+        next_page_url = "https://www.twil.fr/france.html?p=%s" % next_page
+        print("next_page", next_page_url)
 
-        if next_page is not None:
-            yield scrapy.Request(
-                url=next_page_url, callback=self.parse, errback=self.errback_debug
-            )
-        
-        for url in response.xpath("//a[@class='no-text-decoration no_focus']/@href").extract():
+        all_bottles_url = response.xpath(
+            "//a[@class='no-text-decoration no_focus']/@href"
+        ).extract()
+
+        for url in all_bottles_url:
             yield scrapy.Request(
                 url=url,
                 headers=self.BASE_HEADER,
@@ -63,19 +67,85 @@ class TwilSpider(scrapy.Spider):
                 errback=self.errback_debug,
             )
 
+        if next_page is not None:
+            yield scrapy.Request(
+                url=next_page_url,
+                headers=self.BASE_HEADER,
+                callback=self.parse,
+                errback=self.errback_debug,
+            )
+
     def build_item(self, response):
         item = WineItem()
         item["website"] = "twil"
-        item["name"] = response.xpath("//h1[@class='wine-name']/text()").extract_first().strip()
-        item["millesime"] = response.xpath("//span[@itemprop='productionDate']/text()").extract_first() # string for now
-        item["appellation"] = response.xpath("//a[@class='default_color']/text()").extract_first()
-        item["color"] = response.xpath("//span[@class='badge-color fs-14 gotham-book']/span/@class").get().split('-')[1]
-        item["apogee"] = response.xpath("//div[@class='apogee col-xs-12 col-sm-4']/p/text()").extract()[1].strip()
-        item["cepage"] = response.xpath("//div[@class='cepages col-xs-12 col-sm-4']/h2/span/text()").extract()[1].strip()
-        item["terroir"] = response.xpath("//div[@class='terroir col-xs-12 col-sm-4']/h2/span/text()").extract()[1].strip()
-        item["viticulture"] = response.xpath("//div[@class='culture col-xs-12 col-sm-4']/p/text()").extract()[1].strip()
-        item["degree_alcool"] = response.xpath("//div[@class='alcool col-xs-12 col-sm-4']/p/text()").extract()[1].strip()
-
-        item["url"] = response.url
+        try:
+            item["country"] = "france"
+            item["name"] = (
+                response.xpath("//h1[@class='wine-name']/text()")
+                .extract_first()
+                .strip()
+            )
+            print(item["name"])
+            item["vintage"] = response.xpath(
+                "//span[@itemprop='productionDate']/text()"
+            ).extract_first()  # string for now
+            item["domaine"] = response.xpath("//span[@itemprop='brand']/text()").get()
+            item["region"] = response.xpath(
+                "//div[@class='breadcrumbs hidden-xs']/ul/li/a/text()"
+            )[2].get()
+            item["appellation"] = response.xpath(
+                "//a[@class='default_color']/text()"
+            ).extract_first()
+            item["ranking"] = response.xpath(
+                "//div[@class='col-md-6 col-xs-6 rate-stars']/div/div/div/@data-rateit-value"
+            ).get()
+            item["price"] = response.xpath(
+                "//div[@class='tarif']//span[@itemprop='price']/@content"
+            ).get()
+            item["image"] = (
+                response.xpath("//img[@id='image-main']/@src").get()
+                + ","
+                + response.xpath("//img[@id='image-0']/@src").get()
+            )
+            item["color"] = (
+                response.xpath(
+                    "//span[@class='badge-color fs-14 gotham-book']/span/@class"
+                )
+                .get()
+                .split("-")[1]
+            )
+            item["apogee"] = (
+                response.xpath("//div[@class='apogee col-xs-12 col-sm-4']/p/text()")
+                .extract()[1]
+                .strip()
+            )
+            item["grape"] = (
+                response.xpath(
+                    "//div[@class='cepages col-xs-12 col-sm-4']/h2/span/text()"
+                )
+                .extract()[1]
+                .strip()
+            )
+            item["soil"] = (
+                response.xpath(
+                    "//div[@class='terroir col-xs-12 col-sm-4']/h2/span/text()"
+                )
+                .extract()[1]
+                .strip()
+            )
+            item["viticulture"] = (
+                response.xpath("//div[@class='culture col-xs-12 col-sm-4']/p/text()")
+                .extract()[1]
+                .strip()
+            )
+            item["alcool"] = (
+                response.xpath("//div[@class='alcool col-xs-12 col-sm-4']/p/text()")
+                .extract()[1]
+                .strip()
+            )
+            item["url"] = response.url
+            item["website_id"] = response.url.split("#")[1]
+        except:
+            pass
 
         yield item

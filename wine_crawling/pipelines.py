@@ -1,6 +1,7 @@
 from itemadapter import ItemAdapter
 import psycopg2
 
+
 class WinePipeline:
     def open_spider(self, spider):
         hostname = "localhost"
@@ -8,7 +9,9 @@ class WinePipeline:
         password = "1234"
         database = "postgres"
 
-        self.connection = psycopg2.connect(host=hostname, user=username, password=password, dbname=database)
+        self.connection = psycopg2.connect(
+            host=hostname, user=username, password=password, dbname=database
+        )
         self.cursor = self.connection.cursor()
 
     def close_spider(self, spider):
@@ -21,22 +24,18 @@ class WinePipeline:
             self.cursor.execute(creation_query)
             self.connection.commit()
 
-            values_format = tuple([str(it).replace("'", " ") for it in item.values()])
-
-            query = (
-               """
+            query = """
                 INSERT INTO 
                 {}({})
                 VALUES{}
                 """.format(
-                    item.get_table_name(),
-                    ','.join(item.keys()),
-                    tuple([str(it).replace("'", " ") for it in item.values()])
-                )
+                item.get_table_name(),
+                ",".join(item.keys()),
+                tuple([str(it).replace("'", " ") for it in item.values()]),
             )
             self.cursor.execute(query)
             self.connection.commit()
-            print(item["name"])
+
         except (Exception, psycopg2.DatabaseError) as error:
             print("Error: %s" % error)
             self.connection.rollback()

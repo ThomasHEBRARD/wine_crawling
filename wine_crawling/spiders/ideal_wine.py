@@ -77,6 +77,7 @@ class IdealWineSpider(scrapy.Spider):
 
     def build_item(self, response):
         item = WineItem()
+        item["website"] = "idealwine"
         item["name"] = response.xpath(
             "//div[@class='description-1']//h1/text()"
         ).extract_first()
@@ -85,13 +86,11 @@ class IdealWineSpider(scrapy.Spider):
             "//section[@id='descriptif']//article[@class='prez-3']/ul/li"
         )
         item["url"] = response.url
-        item["website"] = "idealwine"
-        quantity = 1
 
         for j in info:
             text = j.xpath("./strong/text()").extract_first()
             if "Pays / Region" in text:
-                item["pays"] = j.xpath("./text()").extract_first()
+                item["country"] = j.xpath("./text()").extract_first()
             if "Couleur" in text:
                 item["color"] = j.xpath("./text()").extract_first()
             if "Appellation" in text:
@@ -101,19 +100,17 @@ class IdealWineSpider(scrapy.Spider):
             if "Propriétaire" in text:
                 item["domaine"] = j.xpath("./text()").extract_first()
             if "Millesime" in text:
-                item["millesime"] = j.xpath("./text()").extract_first()
+                item["vintage"] = j.xpath("./text()").extract_first()
             if "Classement" in text:
-                item["classement"] = j.xpath("./text()").extract_first()
+                item["ranking"] = j.xpath("./text()").extract_first()
             if "Viticulture" in text:
                 item["viticulture"] = (
                     j.xpath("./text()").extract_first().replace("\xa0", "")
                 )
             if "Pourcentage" in text:
-                item["degre_alcool"] = (
+                item["alcool"] = (
                     j.xpath("./text()").extract_first().split(" %")[0]
                 )
-            if "Producteur" in text:
-                item["producteur"] = j.xpath("./text()").extract_first()
 
             if "Encepagement" in text:
                 list_cepage = []
@@ -144,9 +141,9 @@ class IdealWineSpider(scrapy.Spider):
                     else:
                         for k in j.xpath(".//a"):
                             list_cepage.append(k.xpath("./text()").extract_first())
-                    item["cepage"] = "/".join(list_cepage)
+                    item["grape"] = "/".join(list_cepage)
                 else:
-                    item["cepage"] = j.xpath("./text()").extract_first().split(",")
+                    item["grape"] = j.xpath("./text()").extract_first().split(",")
 
             # if "Quantité" in text:
             #     quantity_text = j.xpath("./text()").extract_first()
