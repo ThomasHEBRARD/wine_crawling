@@ -24,14 +24,17 @@ class WinePipeline:
             self.cursor.execute(creation_query)
             self.connection.commit()
 
+            keys = ",".join(item.keys())
+            values = tuple([str(it).replace("'", " ") for it in item.values()])
+
             query = """
                 INSERT INTO 
                 {}({})
                 VALUES{}
                 """.format(
                 item.get_table_name(),
-                ",".join(item.keys()),
-                tuple([str(it).replace("'", " ") for it in item.values()]),
+                keys,
+                values,
             )
             self.cursor.execute(query)
             self.connection.commit()

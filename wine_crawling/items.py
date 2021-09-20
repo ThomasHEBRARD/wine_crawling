@@ -16,6 +16,7 @@ class WineItem(scrapy.Item):
     grape = scrapy.Field(allow_null=True)
     viticulture = scrapy.Field(allow_null=True)
     apogee = scrapy.Field(allow_null=True)
+    garde = scrapy.Field(allow_null=True)
     alcool = scrapy.Field(allow_null=True)
     price = scrapy.Field(allow_null=True)
     ranking = scrapy.Field(allow_null=True)
@@ -43,6 +44,7 @@ class WineItem(scrapy.Item):
                 grape VARCHAR(400),
                 viticulture VARCHAR(400),
                 apogee VARCHAR(400),
+                garde VARCHAR(400),
                 alcool VARCHAR(400),
                 price VARCHAR(400),
                 ranking VARCHAR(400),
