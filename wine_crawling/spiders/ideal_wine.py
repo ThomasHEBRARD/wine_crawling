@@ -1,10 +1,12 @@
 import scrapy
 import re
 from wine_crawling.items import WineItem
+from scrapy.spidermiddlewares.httperror import HttpError
+from twisted.internet.error import DNSLookupError, TCPTimedOutError
 
 
 class IdealWineSpider(scrapy.Spider):
-    name = "ideal_wine"
+    name = "idealwine"
     domain_name = "https://www.idealwine.com"
 
     start_urls = [
@@ -77,41 +79,76 @@ class IdealWineSpider(scrapy.Spider):
 
     def build_item(self, response):
         item = WineItem()
-        item["website"] = "idealwine"
+        item["website"] = "coucou3"
+        item["url"] = response.url
+        item["website_id"] = "-".join(response.url.split("/")[-1].split("-")[:2])
+
+        # Name
         item["name"] = response.xpath(
             "//div[@class='description-1']//h1/text()"
         ).extract_first()
-        capital = response.xpath("//div[@class='critere']/ul/li[@class='capital']")
+
+        # Image
+        image_url = response.xpath("//img[@class='skip-lazy']/@src").get()
+        if image_url:
+            item["image"] = "idealwine.com" + image_url
+
+        # Bottle size
+        for li in response.xpath("//ul[@class='description-1-legends']/li/text()"):
+            bottle_size = li.get()
+            if "L" in bottle_size:
+                item["bottle_size"] = bottle_size
+
         info = response.xpath(
             "//section[@id='descriptif']//article[@class='prez-3']/ul/li"
         )
-        item["url"] = response.url
 
         for j in info:
             text = j.xpath("./strong/text()").extract_first()
-            if "Pays / Region" in text:
+
+            # Region
+            if "Région" in text:
+                item["region"] = j.xpath("./text()").extract_first()
+
+            # Country
+            if "Country" in text:
                 item["country"] = j.xpath("./text()").extract_first()
+
+            # Color
             if "Couleur" in text:
-                item["color"] = j.xpath("./text()").extract_first()
+                item["color"] = j.xpath("./text()").extract_first()[1:]
+
+            # Appellation
             if "Appellation" in text:
-                item["appellation"] = j.xpath("./text()").extract_first()
+                item["appellation"] = j.xpath("./text()").extract_first()[1:]
+
+            # Apogee
             if "Apogée" in text:
-                item["apogee"] = j.xpath("./text()").extract_first()
+                item["apogee"] = j.xpath("./text()").extract_first()[1:]
+
+            # Domaine
             if "Propriétaire" in text:
-                item["domaine"] = j.xpath("./text()").extract_first()
+                item["domaine"] = j.xpath("./text()").extract_first()[1:]
+
+            # Vintage
             if "Millesime" in text:
-                item["vintage"] = j.xpath("./text()").extract_first()
+                item["vintage"] = j.xpath("./text()").extract_first()[1:]
+
+            # Ranking
             if "Classement" in text:
-                item["ranking"] = j.xpath("./text()").extract_first()
+                item["ranking"] = j.xpath("./text()").extract_first()[1:]
+
+            # Viticulture
             if "Viticulture" in text:
                 item["viticulture"] = (
                     j.xpath("./text()").extract_first().replace("\xa0", "")
                 )
-            if "Pourcentage" in text:
-                item["alcool"] = (
-                    j.xpath("./text()").extract_first().split(" %")[0]
-                )
 
+            # Alcool
+            if "Pourcentage" in text:
+                item["alcool"] = j.xpath("./text()").extract_first().split(" %")[0][1:]
+
+            # Grape
             if "Encepagement" in text:
                 list_cepage = []
                 if j.xpath(".//a").extract() is not None:
@@ -131,6 +168,10 @@ class IdealWineSpider(scrapy.Spider):
                                     p = re.search(r",(.*)%", percentage)
                                     if p == None:
                                         p = re.search(r" (.*)%", percentage)
+                                        if p == None:
+                                            p = re.search(r"; (.*)%", percentage)
+                                            if p == None:
+                                                p = re.search(r";(.*)%", percentage)
                             clean_percentages.append(p.group(1).split("%")[0])
 
                         for per, cepage in enumerate(j.xpath(".//a")):
@@ -145,10 +186,16 @@ class IdealWineSpider(scrapy.Spider):
                 else:
                     item["grape"] = j.xpath("./text()").extract_first().split(",")
 
-            # if "Quantité" in text:
-            #     quantity_text = j.xpath("./text()").extract_first()
-            #     quantity = int(quantity_text.split('B')[0])
-            # if price := response.xpath("//span[@id='input_prix']/text()").extract_first() != None:
-            #     item["price"] = int(price)/quantity
-        # print(item.__dict__)
+            # Quantity
+            if "Quantité" in text:
+                quantity_text = (
+                    j.xpath("./text()").extract_first()
+                )
+                quantity = int(quantity_text.split("\xa0")[0])
+
+            # Price
+            price = response.xpath("//span[@id='input_prix']/text()").get()
+            if price:
+                item["price"] = int(price.replace(' ', '')) / quantity
+
         yield item
