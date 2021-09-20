@@ -78,7 +78,7 @@ class TwilSpider(scrapy.Spider):
     def build_item(self, response):
         item = WineItem()
         item["website"] = "twil"
-        item["country"] = "france_to_deleteeee"
+        item["country"] = "france"
         try:
             # Website_id
             item["website_id"] = response.xpath("//input[@name='product']/@value").get()
