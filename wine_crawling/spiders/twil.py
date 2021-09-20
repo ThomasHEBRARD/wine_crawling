@@ -78,35 +78,60 @@ class TwilSpider(scrapy.Spider):
     def build_item(self, response):
         item = WineItem()
         item["website"] = "twil"
+        item["country"] = "france_to_deleteeee"
         try:
-            item["country"] = "france"
+            # Website_id
+            item["website_id"] = response.xpath("//input[@name='product']/@value").get()
+
+            # Bottle name
             item["name"] = (
                 response.xpath("//h1[@class='wine-name']/text()")
                 .extract_first()
                 .strip()
             )
-            print(item["name"])
+            # Vintage
             item["vintage"] = response.xpath(
                 "//span[@itemprop='productionDate']/text()"
             ).extract_first()  # string for now
+
+            print(item["name"], item["vintage"])
+            # Domaine
             item["domaine"] = response.xpath("//span[@itemprop='brand']/text()").get()
+
+            # Region
             item["region"] = response.xpath(
                 "//div[@class='breadcrumbs hidden-xs']/ul/li/a/text()"
             )[2].get()
+
+            # Bottle size
+            bottle_size = response.xpath(
+                "//span[@class='badge-color fs-14 gotham-book']/text()"
+            ).extract()[-1]
+            item["bottle_size"] = re.search(r"(.*)cl", bottle_size).group(1).strip()
+
+            # Appellation
             item["appellation"] = response.xpath(
                 "//a[@class='default_color']/text()"
             ).extract_first()
+
+            # Ranking
             item["ranking"] = response.xpath(
                 "//div[@class='col-md-6 col-xs-6 rate-stars']/div/div/div/@data-rateit-value"
             ).get()
+
+            # Price
             item["price"] = response.xpath(
                 "//div[@class='tarif']//span[@itemprop='price']/@content"
             ).get()
+
+            # Image
             item["image"] = (
                 response.xpath("//img[@id='image-main']/@src").get()
                 + ","
                 + response.xpath("//img[@id='image-0']/@src").get()
             )
+
+            # Color
             item["color"] = (
                 response.xpath(
                     "//span[@class='badge-color fs-14 gotham-book']/span/@class"
@@ -114,11 +139,15 @@ class TwilSpider(scrapy.Spider):
                 .get()
                 .split("-")[1]
             )
+
+            # Apogee
             item["apogee"] = (
                 response.xpath("//div[@class='apogee col-xs-12 col-sm-4']/p/text()")
                 .extract()[1]
                 .strip()
             )
+
+            # Grape
             item["grape"] = (
                 response.xpath(
                     "//div[@class='cepages col-xs-12 col-sm-4']/h2/span/text()"
@@ -126,6 +155,8 @@ class TwilSpider(scrapy.Spider):
                 .extract()[1]
                 .strip()
             )
+
+            # Soil
             item["soil"] = (
                 response.xpath(
                     "//div[@class='terroir col-xs-12 col-sm-4']/h2/span/text()"
@@ -133,18 +164,23 @@ class TwilSpider(scrapy.Spider):
                 .extract()[1]
                 .strip()
             )
+
+            # Viticulture
             item["viticulture"] = (
                 response.xpath("//div[@class='culture col-xs-12 col-sm-4']/p/text()")
                 .extract()[1]
                 .strip()
             )
+
+            # Alcool
             item["alcool"] = (
                 response.xpath("//div[@class='alcool col-xs-12 col-sm-4']/p/text()")
                 .extract()[1]
                 .strip()
             )
+
+            # Url
             item["url"] = response.url
-            item["website_id"] = response.url.split("#")[1]
         except:
             pass
 
