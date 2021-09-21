@@ -13,7 +13,7 @@ class VinsFinsSpider(scrapy.Spider):
     start_urls = ["https://vins-fins.com/vins.html"]
 
     custom_settings = {
-        "DOWNLOAD_DELAY": "0.7",
+        # "DOWNLOAD_DELAY": "1",
         "ITEM_PIPELINES": {
             "wine_crawling.pipelines.WinePipeline": 300,
         },
@@ -61,9 +61,7 @@ class VinsFinsSpider(scrapy.Spider):
 
         current_page = int(response.xpath("//li[@class='current']/text()").get())
 
-        next_page_url = "https://vins-fins.com/vins.html?limit=24&p=%s" % str(
-            current_page + 1
-        )
+        next_page_url = "https://vins-fins.com/vins.html?p=%s" % str(current_page + 1)
         print("curent page", current_page)
 
         if current_page is not None:
@@ -81,31 +79,14 @@ class VinsFinsSpider(scrapy.Spider):
         # URL
         item["url"] = response.url
 
-        price_block = response.xpath(
-            "//span[@itemprop='price'][@class='regular-price hidden']/text()"
-        ).get()
-
         # Website Id
-        # Price
-        if price_block:
-            # Website Id
-            item["website_id"] = (
-                response.xpath(
-                    "//span[@itemprop='price'][@class='regular-price hidden']/@id"
-                )
-                .get()
-                .split("-")[-1]
-            )
+        item["website_id"] = response.xpath("//input[@name='product']/@value").get()
 
-            # Price
-            brut_price = (
-                response.xpath(
-                    "//span[@itemprop='price'][@class='regular-price hidden']/text()"
-                )
-                .extract()[0]
-                .replace(" ", "")
-            )
-            item["price"] = brut_price.strip("\t").strip("\r\n")
+        # Price
+        if brut_price := response.xpath(
+            "//span[@itemprop='price'][@class='regular-price hidden']/text()"
+        ).extract_first():
+            item["price"] = brut_price.replace(" ", "").strip("\t").strip("\r\n")
 
         # Color
         item["color"] = (
