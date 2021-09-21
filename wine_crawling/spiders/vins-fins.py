@@ -89,7 +89,13 @@ class VinsFinsSpider(scrapy.Spider):
         # Price
         if price_block:
             # Website Id
-            item["website_id"] = price_block.split("-")[-1]
+            item["website_id"] = (
+                response.xpath(
+                    "//span[@itemprop='price'][@class='regular-price hidden']/@id"
+                )
+                .get()
+                .split("-")[-1]
+            )
 
             # Price
             brut_price = (
