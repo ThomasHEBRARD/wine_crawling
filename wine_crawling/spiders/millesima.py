@@ -6,7 +6,7 @@ from scrapy.spidermiddlewares.httperror import HttpError
 from twisted.internet.error import DNSLookupError, TCPTimedOutError
 
 
-class TwilSpider(scrapy.Spider):
+class MillesimaSpider(scrapy.Spider):
     name = "millesima"
     domain_name = "https://www.millesima.fr"
 
