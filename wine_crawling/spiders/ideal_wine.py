@@ -126,9 +126,9 @@ class IdealWineSpider(scrapy.Spider):
             if "Apogée" in text:
                 item["apogee"] = j.xpath("./text()").extract_first()[1:]
 
-            # Domaine
+            # Winery
             if "Propriétaire" in text:
-                item["domaine"] = j.xpath("./text()").extract_first()[1:]
+                item["winery"] = j.xpath("./text()").extract_first()[1:]
 
             # Vintage
             if "Millesime" in text:

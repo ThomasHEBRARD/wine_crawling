@@ -6,7 +6,7 @@ class WineItem(scrapy.Item):
     website_id = scrapy.Field(allow_null=True)
     name = scrapy.Field(allow_null=True)
     vintage = scrapy.Field(allow_null=True)
-    domaine = scrapy.Field(allow_null=True)
+    winery = scrapy.Field(allow_null=True)
     country = scrapy.Field(allow_null=True)
     region = scrapy.Field(allow_null=True)
     appellation = scrapy.Field(allow_null=True)
@@ -34,7 +34,7 @@ class WineItem(scrapy.Item):
                 website_id VARCHAR(400),
                 name VARCHAR(400),
                 vintage VARCHAR(400),
-                domaine VARCHAR(400),
+                winery VARCHAR(400),
                 country VARCHAR(400),
                 region VARCHAR(400),
                 appellation VARCHAR(400),

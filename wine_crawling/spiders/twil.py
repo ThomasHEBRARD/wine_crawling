@@ -95,8 +95,8 @@ class TwilSpider(scrapy.Spider):
             ).extract_first()  # string for now
 
             print(item["name"], item["vintage"])
-            # Domaine
-            item["domaine"] = response.xpath("//span[@itemprop='brand']/text()").get()
+            # Winery
+            item["winery"] = response.xpath("//span[@itemprop='brand']/text()").get()
 
             # Region
             item["region"] = response.xpath(

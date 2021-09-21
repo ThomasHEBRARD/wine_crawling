@@ -142,9 +142,9 @@ class MillesimaSpider(scrapy.Spider):
             details = np.vstack((details_key, details_value)).T
 
             for key, value in details:
-                # Domaine
+                # Winery
                 if key == "Producteur":
-                    item["domaine"] = value
+                    item["winery"] = value
 
                 # Region
                 if key == "Région":

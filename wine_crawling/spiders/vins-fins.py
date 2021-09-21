@@ -143,9 +143,9 @@ class VinsFinsSpider(scrapy.Spider):
             if "Appellation" in detail_key:
                 item["appellation"] = detail_value
 
-            # Domaine
+            # Winery
             if "Domaine" in detail_key:
-                item["domaine"] = detail_value
+                item["winery"] = detail_value
 
             # Ranking
             if "Classement" in detail_key:
