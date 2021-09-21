@@ -79,7 +79,7 @@ class IdealWineSpider(scrapy.Spider):
 
     def build_item(self, response):
         item = WineItem()
-        item["website"] = "coucou3"
+        item["website"] = "idealwine"
         item["url"] = response.url
         item["website_id"] = "-".join(response.url.split("/")[-1].split("-")[:2])
 
@@ -188,14 +188,12 @@ class IdealWineSpider(scrapy.Spider):
 
             # Quantity
             if "Quantité" in text:
-                quantity_text = (
-                    j.xpath("./text()").extract_first()
-                )
+                quantity_text = j.xpath("./text()").extract_first()
                 quantity = int(quantity_text.split("\xa0")[0])
 
             # Price
             price = response.xpath("//span[@id='input_prix']/text()").get()
             if price:
-                item["price"] = int(price.replace(' ', '')) / quantity
+                item["price"] = int(price.replace(" ", "")) / quantity
 
         yield item
