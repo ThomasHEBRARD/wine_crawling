@@ -1,11 +1,17 @@
 version: '3'
 
 services:
-  db:
+  db_crawling:
     image: postgres
+    container_name: db_crawling
     environment:
-      - POSTGRES_DB=wine_crawling
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=1234  
+      - POSTGRES_PASSWORD=1234
     ports:
       - "5432:5432"
+
+# To communicate with the other container:
+# docker network create wine
+# docker network connect wine db_crawling
+# docker network connect wine db_backend
+# docker network connect wine wine-backend-app
