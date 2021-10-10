@@ -150,41 +150,39 @@ class IdealWineSpider(scrapy.Spider):
 
             # Grape
             if "Encepagement" in text:
-                list_cepage = []
-                if j.xpath(".//a").extract() is not None:
-                    if "%" in j.xpath(".//strong/following-sibling::text()").get():
-                        brut_percentages = j.xpath(
-                            ".//strong/following-sibling::text()"
-                        )
-                        percentages = [
-                            brut_percentages[i].get()
-                            for i in range(len(brut_percentages))
-                        ]
-                        clean_percentages = []
-                        for percentage in percentages:
-                            if "%" in percentage:
-                                p = re.search(r", (.*)%", percentage)
-                                if p == None:
-                                    p = re.search(r",(.*)%", percentage)
-                                    if p == None:
-                                        p = re.search(r" (.*)%", percentage)
-                                        if p == None:
-                                            p = re.search(r"; (.*)%", percentage)
-                                            if p == None:
-                                                p = re.search(r";(.*)%", percentage)
-                            clean_percentages.append(p.group(1).split("%")[0])
+                item["grape"] = "".join(j.css("li *::text").extract()[1:]).strip()
+                # list_cepage = []
+                # if j.xpath(".//a").extract() is not None:
+                #     if "%" in j.xpath(".//strong/following-sibling::text()").get():
+                #         brut_percentages = j.xpath(
+                #             ".//strong/following-sibling::text()"
+                #         )
+                #         percentages = [perc.get() for perc in brut_percentages]
+                #         clean_percentages = []
+                #         for percentage in percentages:
+                #             if "%" in percentage:
+                #                 p = re.search(r", (.*)%", percentage)
+                #                 if p == None:
+                #                     p = re.search(r",(.*)%", percentage)
+                #                     if p == None:
+                #                         p = re.search(r" (.*)%", percentage)
+                #                         if p == None:
+                #                             p = re.search(r"; (.*)%", percentage)
+                #                             if p == None:
+                #                                 p = re.search(r";(.*)%", percentage)
+                #             clean_percentages.append(p.group(1).split("%")[0])
 
-                        for per, cepage in enumerate(j.xpath(".//a")):
-                            list_cepage.append(
-                                f"{clean_percentages[per]}_"
-                                + cepage.xpath("./text()").extract_first()
-                            )
-                    else:
-                        for k in j.xpath(".//a"):
-                            list_cepage.append(k.xpath("./text()").extract_first())
-                    item["grape"] = "/".join(list_cepage)
-                else:
-                    item["grape"] = j.xpath("./text()").extract_first().split(",")
+                #         for per, cepage in enumerate(j.xpath(".//a")):
+                #             list_cepage.append(
+                #                 f"{clean_percentages[per]}_"
+                #                 + cepage.xpath("./text()").extract_first()
+                #             )
+                #     else:
+                #         for k in j.xpath(".//a"):
+                #             list_cepage.append(k.xpath("./text()").extract_first())
+                #     item["grape"] = "/".join(list_cepage)
+                # else:
+                #     item["grape"] = j.xpath("./text()").extract_first().split(",")
 
             # Quantity
             if "Quantité" in text:
