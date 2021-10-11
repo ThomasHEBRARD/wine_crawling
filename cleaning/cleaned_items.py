@@ -1,7 +1,7 @@
 import scrapy
 
 
-class WineItem(scrapy.Item):
+class CleanedWineItem(scrapy.Item):
     id = scrapy.Field(allow_null=False)
     website_id = scrapy.Field(allow_null=True)
     name = scrapy.Field(allow_null=True)
@@ -25,7 +25,7 @@ class WineItem(scrapy.Item):
     website = scrapy.Field(allow_null=True)
 
     def get_table_name(self):
-        return "public.crawled_bottles"
+        return "public.cleaned_crawled_bottles"
 
     def get_table_creation_query(self):
         return f""" CREATE TABLE IF NOT EXISTS {self.get_table_name()}

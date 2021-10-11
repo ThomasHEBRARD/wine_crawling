@@ -1,11 +1,11 @@
 import statistics
 import re
+import psycopg2
+import pandas as pd
+from cleaned_items import CleanedWineItem
 
 
 def postgresql_to_dataframe(select_query, column_names):
-    import psycopg2
-    import pandas as pd
-
     connection = psycopg2.connect(
         host="localhost",
         database="postgres",
@@ -58,6 +58,41 @@ column_names = [
 ]
 
 df = postgresql_to_dataframe(select_query, column_names)
+
+hostname = "localhost"
+username = "postgres"
+password = "1234"
+database = "postgres"
+
+
+def process_item(item):
+    try:
+        connection = psycopg2.connect(
+            host=hostname, user=username, password=password, dbname=database
+        )
+        cursor = connection.cursor()
+
+        keys = ",".join(item.keys())
+        values = tuple([str(it).replace("'", " ") for it in item.values()])
+
+        query = """
+                INSERT INTO 
+                {}({})
+                VALUES{}
+                """.format(
+            item.get_table_name(),
+            keys,
+            values,
+        )
+        cursor.execute(query)
+        connection.commit()
+
+    except (Exception, psycopg2.DatabaseError) as error:
+        print("Error: %s" % error)
+        connection.rollback()
+        cursor.close()
+
+    return item
 
 
 ########################################################################
@@ -143,6 +178,10 @@ def treat_name_idealwine(col):
     name = name.replace(col.vintage, "")
     name = name.replace(str(col.ranking), "")
     if "cbo" in name.lower():
+        name = re.split(r"\(cbo", name)[0]
+    if "Cbo" in name:
+        name = re.split(r"\(Cbo", name)[0]
+    if "CBO" in name:
         name = re.split(r"\(CBO", name)[0]
     return name
 
@@ -176,9 +215,19 @@ def treat_bottle_size_idealwine(col):
 
 
 for row, col in df.iterrows():
-    ### IDEALWINE ###
     grape = treat_grape_idealwine(col)
     name = treat_name_idealwine(col)
     vintage = treat_vintage_idealwine(col)
     country, region = treat_region_country_idealwine(col)
     bottle_size = treat_bottle_size_idealwine(col)
+
+    item = CleanedWineItem(col.to_dict())
+    item.pop("id")
+    item["grape"] = grape
+    item["name"] = name
+    item["vintage"] = vintage
+    item["country"] = country
+    item["region"] = region
+    item["bottle_size"] = bottle_size
+
+    process_item(item)
