@@ -29,8 +29,8 @@ def postgresql_to_dataframe(select_query, column_names):
 
 
 select_query = """
-    SELECT * FROM public.crawled_bottless
-    WHERE website = 'idealwinetest'
+    SELECT * FROM public.crawled_bottles
+    WHERE website = 'idealwine'
     """
 
 column_names = [
@@ -59,15 +59,19 @@ column_names = [
 
 df = postgresql_to_dataframe(select_query, column_names)
 
-# grape idealwine
-for row, col in df.iterrows():
+
+########################################################################
+########################################################################
+
+
+def treat_grape_idealwine(col):
     if col.grape:
         brut_grapes = col.grape.strip()
         brut_grapes = brut_grapes.replace("\xa0", "")
         brut_grapes = brut_grapes.replace("\t", "")
         grapes = re.split(r"(?<!\d),(?!\d)", brut_grapes)
         final_grape_list = []
-        
+
         for grape in grapes:
             done = False
             grape = grape.replace(",", ".")
@@ -122,13 +126,59 @@ for row, col in df.iterrows():
                 final_grape_list.append(grape.strip())
 
         final_grape = "/".join(final_grape_list) if len(final_grape_list) else None
-        print(final_grape, col.url)
+        return final_grape
+
+        # print(final_grape, col.url)
+        # Autre cas: 50% cabernet sauvignon, 40% merlot, 5% petit verdot 5% cabernet franc
+        # 70_Cab.Sauvignon/23_Merlot/7_Cabernet Franc
+        # https://www.idealwine.com/fr/acheter-vin/B2110040-34108-1-Bouteille-Chateau-Monbrison-CBO-a-partir-de-12bts-2017-Rouge.jsp
+        # https://www.idealwine.com/fr/acheter-vin/B2110040-61887-1-Bouteille-Chateau-La-Prade-2014-Rouge.jsp
+        # https://www.idealwine.com/fr/acheter-vin/B2110040-55125-1-Bouteille-Chateau-la-Conseillante-CBO-a-partir-de-6-bts-2018-Rouge.jsp
+        # https://www.idealwine.com/fr/acheter-vin/B2110040-56250-1-Bouteille-Chateau-la-Clotte-Grand-Cru-Classe-CBO-a-partir-de-6-bts-2014-Rouge.jsp
+        # 70% Merlot 20% cabernet sauvgnon 10_Petit Verdot https://www.idealwine.com/fr/acheter-vin/B2110040-68435-1-Bouteille-Chateau-Rollan-de-By-Cru-Bourgeois-2015-Rouge.jsp
 
 
-# Autre cas: 50% cabernet sauvignon, 40% merlot, 5% petit verdot 5% cabernet franc
-# 70_Cab.Sauvignon/23_Merlot/7_Cabernet Franc
-# https://www.idealwine.com/fr/acheter-vin/B2110040-34108-1-Bouteille-Chateau-Monbrison-CBO-a-partir-de-12bts-2017-Rouge.jsp
-# https://www.idealwine.com/fr/acheter-vin/B2110040-61887-1-Bouteille-Chateau-La-Prade-2014-Rouge.jsp
-# https://www.idealwine.com/fr/acheter-vin/B2110040-55125-1-Bouteille-Chateau-la-Conseillante-CBO-a-partir-de-6-bts-2018-Rouge.jsp
-# https://www.idealwine.com/fr/acheter-vin/B2110040-56250-1-Bouteille-Chateau-la-Clotte-Grand-Cru-Classe-CBO-a-partir-de-6-bts-2014-Rouge.jsp
-# 70% Merlot 20% cabernet sauvgnon 10_Petit Verdot https://www.idealwine.com/fr/acheter-vin/B2110040-68435-1-Bouteille-Chateau-Rollan-de-By-Cru-Bourgeois-2015-Rouge.jsp
+def treat_name_idealwine(col):
+    name = col["name"]
+    name = name.replace(col.vintage, "")
+    name = name.replace(str(col.ranking), "")
+    if "cbo" in name.lower():
+        name = re.split(r"\(CBO", name)[0]
+    return name
+
+
+def treat_vintage_idealwine(col):
+    vintage = col.vintage
+    if not vintage.isdigit():
+        vintage = None
+    return vintage
+
+
+def treat_region_country_idealwine(col):
+    region = col.region
+    country = None
+    if "-" in region:
+        # Trier le cas Rhones-Alpes
+        country = region.split(" - ")[0].strip()
+        region = region.split(" - ")[1].strip()
+        if region == country:
+            region = None
+    else:
+        country = "France"
+    if region == "Autres régions":
+        region = None
+    return country, region
+
+
+def treat_bottle_size_idealwine(col):
+    bottle_size = col.bottle_size.replace("L", "")
+    return bottle_size
+
+
+for row, col in df.iterrows():
+    ### IDEALWINE ###
+    grape = treat_grape_idealwine(col)
+    name = treat_name_idealwine(col)
+    vintage = treat_vintage_idealwine(col)
+    country, region = treat_region_country_idealwine(col)
+    bottle_size = treat_bottle_size_idealwine(col)

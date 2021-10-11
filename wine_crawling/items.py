@@ -25,7 +25,7 @@ class WineItem(scrapy.Item):
     website = scrapy.Field(allow_null=True)
 
     def get_table_name(self):
-        return "public.crawled_bottles"
+        return "public.crawled_bottless"
 
     def get_table_creation_query(self):
         return f""" CREATE TABLE IF NOT EXISTS {self.get_table_name()}
