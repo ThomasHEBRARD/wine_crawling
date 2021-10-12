@@ -74,7 +74,7 @@ def process_item(item):
 
         keys_list, values_list = [], []
         for k, v in item.items():
-            if v:
+            if v and v != "NULL":
                 values_list.append(v)
                 keys_list.append(k)
 
@@ -177,6 +177,7 @@ def treat_grape_idealwine(col):
         return final_grape
 
         # print(final_grape, col.url)
+        # "La_folle_blanche" -> https://www.idealwine.com/fr/acheter-vin/B2110137-45394-1-Bouteille-Vin-de-France-Marguerite-LEcu-Domaine-de-2019-Blanc.jsp
         # Autre cas: 50% cabernet sauvignon, 40% merlot, 5% petit verdot 5% cabernet franc
         # 70_Cab.Sauvignon/23_Merlot/7_Cabernet Franc
         # https://www.idealwine.com/fr/acheter-vin/B2110040-34108-1-Bouteille-Chateau-Monbrison-CBO-a-partir-de-12bts-2017-Rouge.jsp
@@ -211,7 +212,16 @@ def treat_vintage_idealwine(col):
 def treat_region_country_idealwine(col):
     region = col.region
     country = None
-    if "-" in region:
+    # To clean
+    if (
+        "-" in region
+        and "sud" not in region.lower()
+        and "ouest" not in region.lower()
+        and "rhône" not in region.lower()
+        and "rhone" not in region.lower()
+        and "alpes" not in region.lower()
+    ):
+        print(region)
         # Trier le cas Rhones-Alpes
         country = region.split(" - ")[0].strip()
         region = region.split(" - ")[1].strip()

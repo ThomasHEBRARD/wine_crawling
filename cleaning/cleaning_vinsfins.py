@@ -74,7 +74,7 @@ def process_item(item):
 
         keys_list, values_list = [], []
         for k, v in item.items():
-            if v:
+            if v and v != 'NULL':
                 values_list.append(v)
                 keys_list.append(k)
 
