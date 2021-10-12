@@ -98,11 +98,7 @@ class VinsFinsSpider(scrapy.Spider):
 
         # Grape
         if data := response.xpath("//div[@class='product-name-4']/text()"):
-            grapes_not_clean = [
-                r.split("% ") for r in data.get().split(" : ")[-1].split(", ")
-            ]
-            grapes = ["_".join(grape) for grape in grapes_not_clean]
-            item["grape"] = ", ".join(grapes)
+            item["grape"] = data.get().split(":")[-1].strip()
 
         # Bottle Size
         if bottle_size_str := response.xpath(
