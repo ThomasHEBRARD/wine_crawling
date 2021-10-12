@@ -89,13 +89,8 @@ class VinsFinsSpider(scrapy.Spider):
             item["price"] = brut_price.replace(" ", "").strip("\t").strip("\r\n")
 
         # Color
-        item["color"] = (
-            response.xpath("//div[@class='product-name-1']/text()")
-            .get()
-            .split("l")[-1]
-            .replace(" ", "")
-        )
-
+        color = response.xpath("//div[@class='product-name-1']/text()").get()
+        item["color"] = re.split(r"(?<!B)l(?!a)", color)[-1].strip()
         # Image
         image = response.xpath("//img[@itemprop='image'][@id='image']/@src").get()
         if image:
