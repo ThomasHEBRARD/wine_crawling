@@ -72,8 +72,14 @@ def process_item(item):
         )
         cursor = connection.cursor()
 
-        keys = ",".join(item.keys())
-        values = tuple([str(it).replace("'", " ") for it in item.values()])
+        keys_list, values_list = [], []
+        for k, v in item.items():
+            if v:
+                values_list.append(v)
+                keys_list.append(k)
+
+        keys = ",".join(keys_list)
+        values = tuple([str(it).replace("'", " ") for it in values_list])
 
         query = """
                 INSERT INTO 
@@ -107,15 +113,22 @@ def treat_grape_idealwine(col):
         grapes = re.split(r"(?<!\d),(?!\d)", brut_grapes)
         final_grape_list = []
 
+        while not all([grape.count("%") <= 1 for grape in grapes]):
+            for i in range(len(grapes)):
+                if grapes[i].count("%") > 1:
+                    grape = grapes.pop(i)
+                    if len((s := re.split(r"(?<!\d),", grape))) > 1:
+                        grapes[i:i] = s
+                    elif len((s := re.split(r"(?<!net)-(?!\d)", grape))) > 1:
+                        grapes[i:i] = s
+                    else:
+                        grapes[i:i] = re.split(r" et (?<!\d\%)", grape)
+
         for grape in grapes:
             done = False
             grape = grape.replace(",", ".")
-            if grape.count("%") > 1:
-                # indexes = [pos for pos, char in enumerate(grape) if char == "%"]
-                # if indexes[0] < 5:
-                #     grape
-                pass
-            elif "%" in grape:
+
+            if "%" in grape:
                 if p := re.search(r"\((.*)%\)", grape):
                     if not done:
                         percentage = p.group(1)
@@ -183,6 +196,8 @@ def treat_name_idealwine(col):
         name = re.split(r"\(Cbo", name)[0]
     if "CBO" in name:
         name = re.split(r"\(CBO", name)[0]
+    name = name.split(col.ranking)[0]
+    name = name.split(col.vintage)[0]
     return name
 
 
