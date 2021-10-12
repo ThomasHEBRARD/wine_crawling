@@ -72,8 +72,14 @@ def process_item(item):
         )
         cursor = connection.cursor()
 
-        keys = ",".join(item.keys())
-        values = tuple([str(it).replace("'", " ") for it in item.values()])
+        keys_list, values_list = [], []
+        for k, v in item.items():
+            if v:
+                values_list.append(v)
+                keys_list.append(k)
+
+        keys = ",".join(keys_list)
+        values = tuple([str(it).replace("'", " ") for it in values_list])
 
         query = """
                 INSERT INTO 
@@ -99,13 +105,7 @@ def process_item(item):
 ########################################################################
 
 
-def treat_grape_idealwine(col):
-    # 50 % de Cabernet Sauvignon, à 40% de Merlot, à 5 % de Cabernet Franc et à 5 % de Petit Verdot
-    # 56% Cabernet Sauvignon - 36% Merlot - 6% Petit Verdot - 2% Cabernet Franc
-    # 47% Cabernet Sauvignon, 47% Merlot, 5% Petit Verdot, 1% Cabernet Franc
-    # Merlot, Cabernet Sauvignon, cabernet franc
-    # 67% Cabernet-Sauvignon, 25% Merlot, 6% Cabernet-Franc et 2% Petit Verdot
-    # 40% Merlot, 30% Cabernet Sauvignon,  30% Malbec.
+def treat_grape_vinsfins(col):
     if col.grape:
         brut_grapes = col.grape.strip()
         brut_grapes = brut_grapes.replace("\xa0", "")
@@ -113,15 +113,21 @@ def treat_grape_idealwine(col):
         grapes = re.split(r"(?<!\d),(?!\d)", brut_grapes)
         final_grape_list = []
 
+        while not all([grape.count("%") <= 1 for grape in grapes]):
+            for i in range(len(grapes)):
+                if grapes[i].count("%") > 1:
+                    grape = grapes.pop(i)
+                    if len((s := re.split(r"(?<!\d),", grape))) > 1:
+                        grapes[i:i] = s
+                    elif len((s := re.split(r"(?<!net)-(?!\d)", grape))) > 1:
+                        grapes[i:i] = s
+                    else:
+                        grapes[i:i] = re.split(r" et (?<!\d\%)", grape)
+
         for grape in grapes:
             done = False
             grape = grape.replace(",", ".")
-            if grape.count("%") > 1:
-                # indexes = [pos for pos, char in enumerate(grape) if char == "%"]
-                # if indexes[0] < 5:
-                #     grape
-                pass
-            elif "%" in grape:
+            if "%" in grape:
                 if p := re.search(r"\((.*)%\)", grape):
                     if not done:
                         percentage = p.group(1)
@@ -169,63 +175,69 @@ def treat_grape_idealwine(col):
         final_grape = "/".join(final_grape_list) if len(final_grape_list) else None
         return final_grape
 
-        # print(final_grape, col.url)
-        # Autre cas: 50% cabernet sauvignon, 40% merlot, 5% petit verdot 5% cabernet franc
-        # 70_Cab.Sauvignon/23_Merlot/7_Cabernet Franc
-        # https://www.idealwine.com/fr/acheter-vin/B2110040-34108-1-Bouteille-Chateau-Monbrison-CBO-a-partir-de-12bts-2017-Rouge.jsp
-        # https://www.idealwine.com/fr/acheter-vin/B2110040-61887-1-Bouteille-Chateau-La-Prade-2014-Rouge.jsp
-        # https://www.idealwine.com/fr/acheter-vin/B2110040-55125-1-Bouteille-Chateau-la-Conseillante-CBO-a-partir-de-6-bts-2018-Rouge.jsp
-        # https://www.idealwine.com/fr/acheter-vin/B2110040-56250-1-Bouteille-Chateau-la-Clotte-Grand-Cru-Classe-CBO-a-partir-de-6-bts-2014-Rouge.jsp
-        # 70% Merlot 20% cabernet sauvgnon 10_Petit Verdot https://www.idealwine.com/fr/acheter-vin/B2110040-68435-1-Bouteille-Chateau-Rollan-de-By-Cru-Bourgeois-2015-Rouge.jsp
 
-
-def treat_name_idealwine(col):
+def treat_name_vinsfins(col):
     name = col["name"]
     name = name.split(col.ranking)[0]
     name = name.split(col.vintage)[0]
     return name
 
 
-def treat_vintage_idealwine(col):
+def treat_vintage_vinsfins(col):
     vintage = col.vintage
-    if not vintage.isdigit():
-        vintage = None
-    return vintage
+    if vintage:
+        if not vintage.isdigit():
+            vintage = None
+        return vintage
+    return None
 
 
-def treat_region_country_idealwine(col):
-    # Need to complete missing countries: 
+def treat_region_country_vinsfins(col):
+    # Need to complete missing countries:
     # Example: we have the right region (Bourgogne)
     # but the country is missing
     pass
 
 
-def treat_bottle_size_idealwine(col):
-    bottle_size = col.bottle_size.replace("cl", "")
-    bottle_size = int(bottle_size / 100)
-    return bottle_size
+def treat_bottle_size_vinsfins(col):
+    if col.bottle_size:
+        bottle_size = col.bottle_size.replace("cl", "")
+        bottle_size = round(int(bottle_size) / 100, 2)
+        return bottle_size
+    else:
+        return None
 
-def treat_alcool_idealwine(col):
-    alcool = col.alcool.replace("°", "")
-    alcool = col.alcool.replace(",", ".")
+
+def treat_alcool_vinsfins(col):
+    alcool = col.alcool
+    if alcool:
+        alcool = alcool.replace(",", ".")
+        if not alcool[-1].isdigit():
+            return alcool[:-1]
     return alcool
 
-def treat_viticulture_idealwine(col):
-    if col.viticulture == '-':
+
+def treat_viticulture_vinsfins(col):
+    viticulture = col.viticulture
+    if viticulture == "-":
         return None
-    viticulture = col.viticulture.title().strip()
-    return viticulture
+    elif viticulture:
+        viticulture = viticulture.title().strip()
+        return viticulture
+    return None
+
 
 for row, col in df.iterrows():
-    grape = treat_grape_idealwine(col)
-    name = treat_name_idealwine(col)
-    vintage = treat_vintage_idealwine(col)
-    # country, region = treat_region_country_idealwine(col)
-    bottle_size = treat_bottle_size_idealwine(col)
-    alcool = treat_alcool_idealwine(col)
-    viticulture = treat_viticulture_idealwine(col)
+    grape = treat_grape_vinsfins(col)
+    name = treat_name_vinsfins(col)
+    vintage = treat_vintage_vinsfins(col)
+    # country, region = treat_region_country_vinsfins(col)
+    bottle_size = treat_bottle_size_vinsfins(col)
+    alcool = treat_alcool_vinsfins(col)
+    viticulture = treat_viticulture_vinsfins(col)
 
     item = CleanedWineItem(col.to_dict())
+
     item.pop("id")
     item["grape"] = grape
     item["name"] = name
@@ -236,8 +248,4 @@ for row, col in df.iterrows():
     item["alcool"] = alcool
     item["viticulture"] = viticulture
 
-    # process_item(item)
-
-# name : Château Giscours 2015 en double-magnum 
-# 221 228 285
-# 233 Château Giscours 2015 en double-magnum???
+    process_item(item)
