@@ -78,8 +78,8 @@ class GrapePipeline:
                 keys,
                 values,
             )
-            # self.cursor.execute(query)
-            # self.connection.commit()
+            self.cursor.execute(query)
+            self.connection.commit()
 
         except (Exception, psycopg2.DatabaseError) as error:
             print("Error: %s" % error)

@@ -4,6 +4,8 @@ from wine_crawling.items import GrapeItem
 from scrapy.spidermiddlewares.httperror import HttpError
 from twisted.internet.error import DNSLookupError, TCPTimedOutError
 
+import unidecode
+
 
 class IdealWineSpider(scrapy.Spider):
     name = "grape_wikipedia"
@@ -57,8 +59,17 @@ class IdealWineSpider(scrapy.Spider):
 
     def build_item(self, response):
         item = GrapeItem()
-        all_names = response.xpath("//tbody/tr/td[1]/a/text()").extract()
-        print(all_names)
-        all_variantes = response.xpath("//tbody/tr/td[1]/ul/li/text()").extract()
-        print(all_variantes)
-        yield item
+
+        grape_family = response.xpath("//tbody/tr/td[1]")[2:]
+
+        for grape in grape_family:
+            s = grape.xpath("a/text()").get()
+            if s and s != "↑↑":
+                item["name"] = s
+                item["code"] = unidecode.unidecode(item["name"].lower()).replace(
+                    " ", "_"
+                )
+                if ss := grape.xpath("ul/li/text()").get():
+                    item["variants"] = ss
+
+                yield item
