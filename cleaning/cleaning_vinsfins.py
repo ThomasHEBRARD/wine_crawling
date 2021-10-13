@@ -117,12 +117,14 @@ def treat_grape_vinsfins(col):
             for i in range(len(grapes)):
                 if grapes[i].count("%") > 1:
                     grape = grapes.pop(i)
-                    if len((s := re.split(r"(?<!\d),", grape))) > 1:
+                    if len(s := re.split(r"(?<!\d),", grape)) > 1:
                         grapes[i:i] = s
-                    elif len((s := re.split(r"(?<!net)-(?!\d)", grape))) > 1:
+                    elif len(s := re.split(r"(?<!net)-(?!\d)", grape)) > 1:
+                        grapes[i:i] = s
+                    elif len(s := re.split(r" et (?<!\d\%)", grape)) > 1:
                         grapes[i:i] = s
                     else:
-                        grapes[i:i] = re.split(r" et (?<!\d\%)", grape)
+                        grapes[i:i] = grape.split("?")
 
         for grape in grapes:
             done = False
@@ -142,16 +144,20 @@ def treat_grape_vinsfins(col):
                             done = True
                 if p := re.search("\d à \d", grape):
                     if not done:
-                        percentage = statistics.mean(
-                            [int(s) for s in grape.split("%")[0].split("à")]
+                        percentage = str(
+                            statistics.mean(
+                                [int(s) for s in grape.split("%")[0].split("à")]
+                            )
                         )
                         grape_name = grape.split("%")[1]
                         if percentage.isdigit():
                             done = True
                 if p := re.search("\d-\d", grape):
                     if not done:
-                        percentage = statistics.mean(
-                            [int(s) for s in grape.split("%")[0].split("-")]
+                        percentage = str(
+                            statistics.mean(
+                                [int(s) for s in grape.split("%")[0].split("-")]
+                            )
                         )
                         grape_name = grape.split("%")[1]
                         if percentage.isdigit():
@@ -178,8 +184,8 @@ def treat_grape_vinsfins(col):
 
 def treat_name_vinsfins(col):
     name = col["name"]
-    name = name.split(col.ranking)[0]
-    name = name.split(col.vintage)[0]
+    name = name.split(str(col.ranking))[0]
+    name = name.split(str(col.vintage))[0]
     return name
 
 

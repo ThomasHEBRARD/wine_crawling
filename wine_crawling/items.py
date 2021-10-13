@@ -53,3 +53,13 @@ class WineItem(scrapy.Item):
                 website VARCHAR(400)
             );
         """
+
+
+class GrapeItem(scrapy.Item):
+    id = scrapy.Field(allow_null=False)
+    name = scrapy.Field(allow_null=True)
+    code = scrapy.Field(allow_null=True)
+    variants = scrapy.Field(allow_null=True)
+
+    def get_table_name(self):
+        return "public.business_grape"

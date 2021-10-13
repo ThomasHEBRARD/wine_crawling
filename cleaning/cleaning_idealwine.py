@@ -110,74 +110,97 @@ def treat_grape_idealwine(col):
         brut_grapes = col.grape.strip()
         brut_grapes = brut_grapes.replace("\xa0", "")
         brut_grapes = brut_grapes.replace("\t", "")
-        grapes = re.split(r"(?<!\d),(?!\d)", brut_grapes)
         final_grape_list = []
 
-        while not all([grape.count("%") <= 1 for grape in grapes]):
+        if '%' in brut_grapes:
+            grapes = re.split(r"%", brut_grapes)
             for i in range(len(grapes)):
-                if grapes[i].count("%") > 1:
-                    grape = grapes.pop(i)
-                    if len((s := re.split(r"(?<!\d),", grape))) > 1:
-                        grapes[i:i] = s
-                    elif len((s := re.split(r"(?<!net)-(?!\d)", grape))) > 1:
-                        grapes[i:i] = s
-                    else:
-                        grapes[i:i] = re.split(r" et (?<!\d\%)", grape)
+                
+    # if col.grape:
+    #     brut_grapes = col.grape.strip()
+    #     brut_grapes = brut_grapes.replace("\xa0", "")
+    #     brut_grapes = brut_grapes.replace("\t", "")
+    #     grapes = re.split(r"(?<!\d),(?!\d)", brut_grapes)
+    #     final_grape_list = []
+    #     itermax = 50
+    #     iter = 0
 
-        for grape in grapes:
-            done = False
-            grape = grape.replace(",", ".")
+    #     while not all([g.count("%") <= 1 for g in grapes]) and iter < itermax:
+    #         iter += 1
+    #         for i in range(len(grapes)):
+    #             if grapes[i].count("%") > 1:
+    #                 grape = grapes.pop(i)
+    #                 if len(s := re.split(r"(?<!\d),", grape)) > 1:
+    #                     grapes[i:i] = s
+    #                 elif len(s := re.split(r"(?<!net)-(?!\d)", grape)) > 1:
+    #                     grapes[i:i] = s
+    #                 elif len(s := re.split(r" et (?<!\d\%)", grape)) > 1:
+    #                     grapes[i:i] = s
+    #                 elif len(s := grape.split(";")) > 1:
+    #                     grapes[i:i] = s
+    #                 else:
+    #                     grapes[i:i] = grape.split("?")
+    #         if iter > 48:
+    #             print(grapes)
 
-            if "%" in grape:
-                if p := re.search(r"\((.*)%\)", grape):
-                    if not done:
-                        percentage = p.group(1)
-                        grape_name = grape.split("(" + percentage + "%)")[0].strip()
-                        if percentage.isdigit():
-                            done = True
-                if p := re.search(r"(.*)%", grape):
-                    if not done:
-                        percentage = p.group(1)
-                        grape_name = grape.split(percentage + "%")[1].strip()
-                        if percentage.isdigit():
-                            done = True
-                if p := re.search("\d à \d", grape):
-                    if not done:
-                        percentage = statistics.mean(
-                            [int(s) for s in grape.split("%")[0].split("à")]
-                        )
-                        grape_name = grape.split("%")[1]
-                        if percentage.isdigit():
-                            done = True
-                if p := re.search("\d-\d", grape):
-                    if not done:
-                        percentage = statistics.mean(
-                            [int(s) for s in grape.split("%")[0].split("-")]
-                        )
-                        grape_name = grape.split("%")[1]
-                        if percentage.isdigit():
-                            done = True
+    #     for grape in grapes:
+    #         done = False
+    #         grape = grape.replace(",", ".")
 
-                if grape.split("%")[-1] == "":
-                    if not done:
-                        percentage_match = re.search(
-                            r"[-+]?\d*\.\d+|\d+", grape
-                        ) or re.search(r"[-+]?\d*\.\d+|\d+ ", grape)
-                        percentage = percentage_match.group(0)
-                        grape_name = grape.split(percentage + "%")[0]
-                        if percentage.isdigit():
-                            done = True
+    #         if "%" in grape:
+    #             if p := re.search(r"\((.*)%\)", grape):
+    #                 if not done:
+    #                     percentage = p.group(1)
+    #                     grape_name = grape.split("(" + percentage + "%)")[0].strip()
+    #                     if percentage.isdigit():
+    #                         done = True
+    #             if p := re.search(r"(.*)%", grape):
+    #                 if not done:
+    #                     percentage = p.group(1)
+    #                     grape_name = grape.split(percentage + "%")[1].strip()
+    #                     if percentage.isdigit():
+    #                         done = True
+    #             if p := re.search("\d à \d", grape):
+    #                 if not done:
+    #                     percentage = str(
+    #                         statistics.mean(
+    #                             [int(s) for s in grape.split("%")[0].split("à")]
+    #                         )
+    #                     )
+    #                     grape_name = grape.split("%")[1]
+    #                     if percentage.isdigit():
+    #                         done = True
+    #             if p := re.search("\d-\d", grape):
+    #                 if not done:
+    #                     percentage = str(
+    #                         statistics.mean(
+    #                             [int(s) for s in grape.split("%")[0].split("-")]
+    #                         )
+    #                     )
+    #                     grape_name = grape.split("%")[1]
+    #                     if percentage.isdigit():
+    #                         done = True
 
-                grape_name = grape_name.title().replace("-", " ")
-                final_grape_list.append(percentage.strip() + "_" + grape_name.strip())
-            else:
-                final_grape_list.append(grape.replace("_", " ").title().strip())
+    #             if grape.split("%")[-1] == "":
+    #                 if not done:
+    #                     percentage_match = re.search(
+    #                         r"[-+]?\d*\.\d+|\d+", grape
+    #                     ) or re.search(r"[-+]?\d*\.\d+|\d+ ", grape)
+    #                     percentage = percentage_match.group(0)
+    #                     grape_name = grape.split(percentage + "%")[0]
+    #                     if percentage.isdigit():
+    #                         done = True
 
-        final_grape = "/".join(final_grape_list) if len(final_grape_list) else None
-        return final_grape
+    #             grape_name = grape_name.title().replace("-", " ")
+    #             final_grape_list.append(percentage.strip() + "_" + grape_name.strip())
+    #         else:
+    #             final_grape_list.append(grape.replace("_", " ").title().strip())
+
+    #     final_grape = "/".join(final_grape_list) if len(final_grape_list) else None
+    #     return final_grape
 
         # print(final_grape, col.url)
-        #Michel Couvreur Candid (70cl) 
+        # Michel Couvreur Candid (70cl)
         # "La_folle_blanche" -> https://www.idealwine.com/fr/acheter-vin/B2110137-45394-1-Bouteille-Vin-de-France-Marguerite-LEcu-Domaine-de-2019-Blanc.jsp
         # Autre cas: 50% cabernet sauvignon, 40% merlot, 5% petit verdot 5% cabernet franc
         # 70_Cab.Sauvignon/23_Merlot/7_Cabernet Franc
@@ -186,27 +209,37 @@ def treat_grape_idealwine(col):
         # https://www.idealwine.com/fr/acheter-vin/B2110040-55125-1-Bouteille-Chateau-la-Conseillante-CBO-a-partir-de-6-bts-2018-Rouge.jsp
         # https://www.idealwine.com/fr/acheter-vin/B2110040-56250-1-Bouteille-Chateau-la-Clotte-Grand-Cru-Classe-CBO-a-partir-de-6-bts-2014-Rouge.jsp
         # 70% Merlot 20% cabernet sauvgnon 10_Petit Verdot https://www.idealwine.com/fr/acheter-vin/B2110040-68435-1-Bouteille-Chateau-Rollan-de-By-Cru-Bourgeois-2015-Rouge.jsp
+        # ['60% Cabernet Sauvignon', ' 35% Merlot 5% Petit verdot']
+        # ['80% Merlot 80%', ' 20% Cabernet franc']
+        # ['70% Syrah >Syrah 20%Grenache 10% Mourvèdre']
+        # ['30 à 40% Savagnin 60 à 70% chardonnay']
+        # ['70% Merlot 20% cabernet sauvgnon 10% Petit verdot']   sauvgnon
+        # ['Cab. Sauv. 50% Merlot 40% Cab. Fc 5%', ' P. Verdot 5%']
+        # ['70% Syrah >Syrah 20%Grenache 10% Mourvèdre']
+        # ['Clairette 40% Grenache 30% bourboulenc', ' Roussanne']
+        #ou sinon splitet par %, et faire le tri
 
 
 def treat_name_idealwine(col):
     name = col["name"]
-    name = name.replace(col.vintage, "")
-    name = name.replace(str(col.ranking), "")
+    name = name.split(str(col.ranking))[0]
+    name = name.split(str(col.vintage))[0]
     if "cbo" in name.lower():
         name = re.split(r"\(cbo", name)[0]
     if "Cbo" in name:
         name = re.split(r"\(Cbo", name)[0]
     if "CBO" in name:
         name = re.split(r"\(CBO", name)[0]
-    name = name.split(col.ranking)[0]
-    name = name.split(col.vintage)[0]
+    # remove winery
     return name
 
 
 def treat_vintage_idealwine(col):
     vintage = col.vintage
-    if not vintage.isdigit():
-        vintage = None
+    if vintage:
+        if not vintage.isdigit():
+            vintage = None
+        return vintage
     return vintage
 
 
@@ -220,6 +253,7 @@ def treat_region_country_idealwine(col):
     # Guyane britannique - Demerara-Mahaica
     # Découper selon les -: Si y'en a 1 qui est collés aux lettres -> Français
     # Sinon c'est une région composée
+    # Japan, Hso - ddzdok (c'est l'île)
     if (
         "-" in region
         and "sud" not in region.lower()
@@ -228,7 +262,6 @@ def treat_region_country_idealwine(col):
         and "rhone" not in region.lower()
         and "alpes" not in region.lower()
     ):
-        print(region)
         # Trier le cas Rhones-Alpes
         country = region.split(" - ")[0].strip().title()
         region = region.split(" - ")[1].strip().title()
