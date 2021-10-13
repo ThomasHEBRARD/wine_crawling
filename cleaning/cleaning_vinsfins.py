@@ -74,7 +74,7 @@ def process_item(item):
 
         keys_list, values_list = [], []
         for k, v in item.items():
-            if v and v != 'NULL':
+            if v and v != "NULL":
                 values_list.append(v)
                 keys_list.append(k)
 
@@ -170,7 +170,7 @@ def treat_grape_vinsfins(col):
                 grape_name = grape_name.title().replace("-", " ")
                 final_grape_list.append(percentage.strip() + "_" + grape_name.strip())
             else:
-                final_grape_list.append(grape.strip())
+                final_grape_list.append(grape.title().strip())
 
         final_grape = "/".join(final_grape_list) if len(final_grape_list) else None
         return final_grape

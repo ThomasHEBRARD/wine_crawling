@@ -171,12 +171,13 @@ def treat_grape_idealwine(col):
                 grape_name = grape_name.title().replace("-", " ")
                 final_grape_list.append(percentage.strip() + "_" + grape_name.strip())
             else:
-                final_grape_list.append(grape.strip())
+                final_grape_list.append(grape.replace("_", " ").title().strip())
 
         final_grape = "/".join(final_grape_list) if len(final_grape_list) else None
         return final_grape
 
         # print(final_grape, col.url)
+        #Michel Couvreur Candid (70cl) 
         # "La_folle_blanche" -> https://www.idealwine.com/fr/acheter-vin/B2110137-45394-1-Bouteille-Vin-de-France-Marguerite-LEcu-Domaine-de-2019-Blanc.jsp
         # Autre cas: 50% cabernet sauvignon, 40% merlot, 5% petit verdot 5% cabernet franc
         # 70_Cab.Sauvignon/23_Merlot/7_Cabernet Franc
@@ -213,6 +214,12 @@ def treat_region_country_idealwine(col):
     region = col.region
     country = None
     # To clean
+    # Divers - Divers ??
+    # Japon - Honshu - Miyagi
+    # Etats-Unis - Etats-Unis
+    # Guyane britannique - Demerara-Mahaica
+    # Découper selon les -: Si y'en a 1 qui est collés aux lettres -> Français
+    # Sinon c'est une région composée
     if (
         "-" in region
         and "sud" not in region.lower()
@@ -223,8 +230,8 @@ def treat_region_country_idealwine(col):
     ):
         print(region)
         # Trier le cas Rhones-Alpes
-        country = region.split(" - ")[0].strip()
-        region = region.split(" - ")[1].strip()
+        country = region.split(" - ")[0].strip().title()
+        region = region.split(" - ")[1].strip().title()
         if region == country:
             region = None
     else:
