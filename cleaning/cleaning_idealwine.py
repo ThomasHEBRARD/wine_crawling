@@ -108,14 +108,74 @@ def process_item(item):
 def treat_grape_idealwine(col):
     if col.grape:
         brut_grapes = col.grape.strip()
-        brut_grapes = brut_grapes.replace("\xa0", "")
-        brut_grapes = brut_grapes.replace("\t", "")
+        brut_grapes = (
+            brut_grapes.replace("\xa0", "").replace("ù", "%").replace("\t", "")
+        )
         final_grape_list = []
 
-        if '%' in brut_grapes:
+        to_remove = re.search(r"\((.*)\)", brut_grapes)
+        if to_remove:
+            to_remove = to_remove.group(1)
+            if not "%" in to_remove:
+                brut_grapes = brut_grapes.replace("({})".format(to_remove), "")
+
+        if "assemblage" in brut_grapes:
+            brut_grapes = brut_grapes.split("assemblage")[0]
+
+        if "%" in brut_grapes:
             grapes = re.split(r"%", brut_grapes)
-            for i in range(len(grapes)):
-                
+            if grapes[0].strip().isdigit():
+                current_percentage = grapes[0]
+                current_grape = None
+                for i in range(len(grapes)):
+                    if not re.findall("[0-9]+", grapes[i + 1]):
+                        current_grape = (
+                            grapes[i + 1]
+                            .replace(".", "")
+                            .replace("-", " ")
+                            .strip()
+                            .title()
+                        )
+                        final_grape_list.append(
+                            str(current_percentage) + "_" + str(current_grape)
+                        )
+                        break
+                    next_percentage = re.findall("[0-9]+", grapes[i + 1])[0].strip()
+                    current_grape = (
+                        grapes[i + 1]
+                        .replace(str(next_percentage), "")
+                        .replace(".", "")
+                        .replace("-", " ")
+                        .strip()
+                        .title()
+                    )
+                    final_grape_list.append(
+                        str(current_percentage) + "_" + str(current_grape)
+                    )
+                    current_percentage = next_percentage
+            else:
+                print(brut_grapes)
+                for i in range(len(grapes)):
+                    if re.findall("[0-9]+", grapes[i]):
+                        current_percentage = re.findall("[0-9]+", grapes[i])[0]
+                        current_grape = re.sub(
+                            r"(?<!\d),(?!\d)",
+                            "",
+                            grapes[i]
+                            .replace(str(current_percentage), "")
+                            .replace(".", "")
+                            .replace("-", " ")
+                            .replace("(", " ")
+                            .replace(")", " ")
+                            .strip()
+                            .title(),
+                        )
+                        final_grape_list.append(
+                            str(current_percentage) + "_" + str(current_grape)
+                        )
+                print(final_grape_list)
+
+    ###
     # if col.grape:
     #     brut_grapes = col.grape.strip()
     #     brut_grapes = brut_grapes.replace("\xa0", "")
@@ -191,39 +251,75 @@ def treat_grape_idealwine(col):
     #                     if percentage.isdigit():
     #                         done = True
 
-    #             grape_name = grape_name.title().replace("-", " ")
-    #             final_grape_list.append(percentage.strip() + "_" + grape_name.strip())
+    #             grape_name = (
+    #                 grape_name.replace(".", "").replace("-", " ").strip().title()
+    #             )
+    #             final_grape_list.append(percentage.strip() + "_" + grape_name)
     #         else:
-    #             final_grape_list.append(grape.replace("_", " ").title().strip())
+    #             final_grape_list.append(
+    #                 grape.replace(".", "")
+    #                 .replace("_", "")
+    #                 .replace("-", " ")
+    #                 .strip()
+    #                 .title()
+    #             )
 
     #     final_grape = "/".join(final_grape_list) if len(final_grape_list) else None
     #     return final_grape
 
-        # print(final_grape, col.url)
-        # Michel Couvreur Candid (70cl)
-        # "La_folle_blanche" -> https://www.idealwine.com/fr/acheter-vin/B2110137-45394-1-Bouteille-Vin-de-France-Marguerite-LEcu-Domaine-de-2019-Blanc.jsp
-        # Autre cas: 50% cabernet sauvignon, 40% merlot, 5% petit verdot 5% cabernet franc
-        # 70_Cab.Sauvignon/23_Merlot/7_Cabernet Franc
-        # https://www.idealwine.com/fr/acheter-vin/B2110040-34108-1-Bouteille-Chateau-Monbrison-CBO-a-partir-de-12bts-2017-Rouge.jsp
-        # https://www.idealwine.com/fr/acheter-vin/B2110040-61887-1-Bouteille-Chateau-La-Prade-2014-Rouge.jsp
-        # https://www.idealwine.com/fr/acheter-vin/B2110040-55125-1-Bouteille-Chateau-la-Conseillante-CBO-a-partir-de-6-bts-2018-Rouge.jsp
-        # https://www.idealwine.com/fr/acheter-vin/B2110040-56250-1-Bouteille-Chateau-la-Clotte-Grand-Cru-Classe-CBO-a-partir-de-6-bts-2014-Rouge.jsp
-        # 70% Merlot 20% cabernet sauvgnon 10_Petit Verdot https://www.idealwine.com/fr/acheter-vin/B2110040-68435-1-Bouteille-Chateau-Rollan-de-By-Cru-Bourgeois-2015-Rouge.jsp
-        # ['60% Cabernet Sauvignon', ' 35% Merlot 5% Petit verdot']
-        # ['80% Merlot 80%', ' 20% Cabernet franc']
-        # ['70% Syrah >Syrah 20%Grenache 10% Mourvèdre']
-        # ['30 à 40% Savagnin 60 à 70% chardonnay']
-        # ['70% Merlot 20% cabernet sauvgnon 10% Petit verdot']   sauvgnon
-        # ['Cab. Sauv. 50% Merlot 40% Cab. Fc 5%', ' P. Verdot 5%']
-        # ['70% Syrah >Syrah 20%Grenache 10% Mourvèdre']
-        # ['Clairette 40% Grenache 30% bourboulenc', ' Roussanne']
-        #ou sinon splitet par %, et faire le tri
+    # virer tout ce qui est entre parenthèse si y'a pas de pourcentage
+    # Michel Couvreur Candid (70cl)
+    # "La_folle_blanche" -> https://www.idealwine.com/fr/acheter-vin/B2110137-45394-1-Bouteille-Vin-de-France-Marguerite-LEcu-Domaine-de-2019-Blanc.jsp
+    # Autre cas: 50% cabernet sauvignon, 40% merlot, 5% petit verdot 5% cabernet franc
+    # 70_Cab.Sauvignon/23_Merlot/7_Cabernet Franc
+    # https://www.idealwine.com/fr/acheter-vin/B2110040-34108-1-Bouteille-Chateau-Monbrison-CBO-a-partir-de-12bts-2017-Rouge.jsp
+    # https://www.idealwine.com/fr/acheter-vin/B2110040-61887-1-Bouteille-Chateau-La-Prade-2014-Rouge.jsp
+    # https://www.idealwine.com/fr/acheter-vin/B2110040-55125-1-Bouteille-Chateau-la-Conseillante-CBO-a-partir-de-6-bts-2018-Rouge.jsp
+    # https://www.idealwine.com/fr/acheter-vin/B2110040-56250-1-Bouteille-Chateau-la-Clotte-Grand-Cru-Classe-CBO-a-partir-de-6-bts-2014-Rouge.jsp
+    # 70% Merlot 20% cabernet sauvgnon 10_Petit Verdot https://www.idealwine.com/fr/acheter-vin/B2110040-68435-1-Bouteille-Chateau-Rollan-de-By-Cru-Bourgeois-2015-Rouge.jsp
+    # ['60% Cabernet Sauvignon', ' 35% Merlot 5% Petit verdot']
+    # ['80% Merlot 80%', ' 20% Cabernet franc']
+    # ['70% Syrah >Syrah 20%Grenache 10% Mourvèdre']
+    # ['30 à 40% Savagnin 60 à 70% chardonnay']
+    # ['70% Merlot 20% cabernet sauvgnon 10% Petit verdot']   sauvgnon
+    # ['Cab. Sauv. 50% Merlot 40% Cab. Fc 5%', ' P. Verdot 5%']
+    # ['70% Syrah >Syrah 20%Grenache 10% Mourvèdre']
+    # ['Clairette 40% Grenache 30% bourboulenc', ' Roussanne']
+    # ou sinon splitet par %, et faire le tri
+
+    # -> Pour les https, prendre le chiffre (ou pas) devant et prendre le truc juste avant jsp, c'est le nom du cepage
+
+    # "https://www.idealwine.com/fr/decouverte/cepage_chardonnay.jsp"
+    # "https://www.idealwine.com/fr/decouverte/cepage_chardonnay.jsp"
+    # "https://www.idealwine.com/fr/decouverte/cepage_chardonnay.jsp"
+    # "https://www.idealwine.com/fr/decouverte/cepage_chardonnay.jsp"
+    # "https://www.idealwine.com/fr/decouverte/cepage_chardonnay.jsp"
+    # "https://www.idealwine.com/fr/decouverte/cepage_chardonnay.jsp"
+    # "https://www.idealwine.com/fr/decouverte/cepage_chardonnay.jsp"
+    # "https://www.idealwine.com/fr/decouverte/cepage_chardonnay.jsp"
+    # "https://www.idealwine.com/fr/decouverte/cepage_chardonnay.jsp"
+    # "100% https://www.idealwine.com/fr/decouverte/cepage_chardonnay.jsp"
+    # "https://www.idealwine.com/fr/decouverte/cepage_chardonnay.jsp"
+    # "https://www.idealwine.com/fr/decouverte/cepage_chardonnay.jsp"
+    # "https://www.idealwine.com/fr/decouverte/cepage_chardonnay.jsp"
+    # "https://www.idealwine.com/fr/decouverte/cepage_chardonnay.jsp"
+    # "https://www.idealwine.com/fr/decouverte/cepage_chardonnay.jsp"
+    # "https://www.idealwine.com/fr/decouverte/cepage_chardonnay.jsp"
+    # "https://www.idealwine.com/fr/decouverte/cepage_chardonnay.jsp, https://www.idealwine.com/fr/decouverte/cepage_pinot-noir.jsp"
+    # "100% https://www.idealwine.com/fr/decouverte/cepage_chardonnay.jsp"
+    # "https://www.idealwine.com/fr/decouverte/cepage_savagnin.jsp, https://www.idealwine.com/fr/decouverte/cepage_chardonnay.jsp"
+    # "https://www.idealwine.com/fr/decouverte/cepage_chardonnay.jsp"
+    # "https://www.idealwine.com/fr/decouverte/cepage_chardonnay.jsp, https://www.idealwine.com/fr/decouverte/cepage_pinot-noir.jsp"
+    # "https://www.idealwine.com/fr/decouverte/cepage_chardonnay.jsp"
 
 
 def treat_name_idealwine(col):
     name = col["name"]
     name = name.split(str(col.ranking))[0]
     name = name.split(str(col.vintage))[0]
+    name = name.replace(
+        "({}cl)".format(int(float(col.bottle_size.replace("L", "")) * 100)), ""
+    )
     if "cbo" in name.lower():
         name = re.split(r"\(cbo", name)[0]
     if "Cbo" in name:
@@ -295,4 +391,4 @@ for row, col in df.iterrows():
     item["region"] = region
     item["bottle_size"] = bottle_size
 
-    process_item(item)
+    # process_item(item)
