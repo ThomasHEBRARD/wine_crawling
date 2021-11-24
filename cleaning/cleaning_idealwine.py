@@ -3,6 +3,7 @@ import re
 import psycopg2
 import pandas as pd
 from cleaned_items import CleanedWineItem
+from word_recognition import rec
 
 
 def postgresql_to_dataframe(select_query, column_names):
@@ -154,7 +155,6 @@ def treat_grape_idealwine(col):
                     )
                     current_percentage = next_percentage
             else:
-                print(brut_grapes)
                 for i in range(len(grapes)):
                     if re.findall("[0-9]+", grapes[i]):
                         current_percentage = re.findall("[0-9]+", grapes[i])[0]
@@ -173,7 +173,19 @@ def treat_grape_idealwine(col):
                         final_grape_list.append(
                             str(current_percentage) + "_" + str(current_grape)
                         )
-                print(final_grape_list)
+        print(
+            [
+                (grape.split("_")[1], rec(grape.split("_")[1]))
+                for grape in final_grape_list
+            ]
+        )
+
+
+
+
+
+
+        #### EN FAIT, GARER LES CHIFFRES/POURCENTAGE ON S'EN FOU, L'ALGO VA PRENDRE LE MEILLEUR MATCH QUOI QU'IL ARRIVE, ET ENSUITE IL FAUT MATCHER LES CHIFFRES
 
     ###
     # if col.grape:

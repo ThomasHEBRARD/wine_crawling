@@ -65,20 +65,21 @@ def rec(word):
             if (s := fuzz.ratio(variant, word)) > max[1]:
                 max = (name, s)
 
-    return word + "   ", max
+    return max[0]
 
 
-print(rec("cab fr"))
-print(rec("Chenin Blan"))
-print(rec("De Cabernet Franc"))
-print(rec("De Cabernet Sauvignon"))
-print(rec("De Merlot"))
-print(rec("De Petit Verdot"))
-print(rec("Gewurztra"))
-print(rec("Macabeo"))
-print(rec("Malbec."))
-print(rec("Merlot (Pas De Petit Verdot Dans Ce Millésime)"))
-print(rec("Mondeuse"))
-print(rec("Muscat blanc à petits grains"))
-print(rec("Poulsar"))
-print(rec("Uugni"))
+# print(rec("cab fr"))
+# print(rec("Chenin Blan"))
+# print(rec("De Cabernet Franc"))
+# print(rec("De Cabernet Sauvignon"))
+# print(rec("De Merlot"))
+# print(rec("De Petit Verdot"))
+# print(rec("Gewurztra"))
+# print(rec("Macabeo"))
+# print(rec("Malbec."))
+# print(rec("Merlot (Pas De Petit Verdot Dans Ce Millésime)"))
+# print(rec("Mondeuse"))
+# print(rec("Muscat blanc à petits grains"))
+# print(rec("Poulsar"))
+# print(rec("Uugni"))
+####### >------>_>_>_>_>_ ('Pressac', 'prensal')
